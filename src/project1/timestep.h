@@ -33,6 +33,7 @@ void set_timestep (Vector *u, double dx, double mu)
 }
 
 void solve();
+
 void destroy_grid();
 
 void run()

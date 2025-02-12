@@ -1,14 +1,55 @@
+#ifndef 2D_GRID
+#define 2D_GRID
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "timstep.h"
 
 
+typedef enum {
+    LEFT,           // 0
+    RIGHT,          // 1
+    TOP,            // 2
+    BOTTOM,         // 3
+    NUM_BOUNDARIES  // 4
+} Boundaries;
+
+
 typedef struct Vector 
 {
     double x;
     double y;
+} Vector;
+
+
+VectorField f;
+
+void dirichlet ()
+{
+
 }
+
+#define test (expr) \
+    static inline double dirichlet_x (int x, int y, double t) {return expr}
+
+f.boundary[LEFT].x = ;
+
+
+typedef struct VectorField
+{
+    double *x;
+    double *y;
+
+
+    Vector *boundary;
+    
+    bool *dirichlet_x;
+    bool *dirichlet_y;
+    bool *neumann_x;
+    bool *neumann_x;
+
+} VectorField;
 
 
 typedef struct Grid 
@@ -102,7 +143,4 @@ void destroy_grid ()
     if (grid.u) { free(grid.u); grid.u = NULL; }
     if (grid.p) { free(grid.p); grid.p = NULL; }
 }
-
-
-
-
+#endif
