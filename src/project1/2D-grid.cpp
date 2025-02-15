@@ -1,16 +1,30 @@
 #include "../../include/2D-grid.h"
 
 
+double delta = 1.;
+Grid grid;
+Array2D& x = grid.x, y = grid.y;
+
+extern VectorField pf;
+
 void init_grid (double width, double height, int level)
 {
-    grid(width, height, level);
+    grid.resize(width, height, level);
 
+    std::cout << "### Initalized Gride ###\n" << 
+                 "width | height | lvl | row | col | delta\n" <<
+                 grid.width << "\t" << grid.height << "\t" << grid.level << "\t" <<
+                 grid.row << "\t" << grid.col << "\t" << grid.delta << "\n";
+
+    delta = grid.delta;
     // initalize x & y coordinates
     FOREACH_CELL() 
-    {        
-        grid.x(i,j) =  (i * grid.delta - 2*ghost) + grid.delta / 2;
-        grid.y(i,j) =  (j * grid.delta - 2*ghost) + grid.delta / 2;
+    {
+        grid.x(i,j) =  i*delta + delta/2 - ghost*delta;
+        grid.y(i,j) =  j*delta + delta/2 - ghost*delta;
     }
+
+    pf.resize(grid.width, grid.height, 0.0);
 }
 
 
@@ -29,12 +43,12 @@ void update_boundary_impl (VectorField& vf)
     {
         for (int j = 0; j < grid.row; ++j) 
         {
-            if (vf.boundary.dirichhlet_x)
+            if (vf.boundary.dirichlet_x)
                 vf.x(i,j) = 2*vf.boundary.x[LEFT]() - vf.x(i+1,j);
             else
                 vf.x(i,j) = vf.boundary.x[LEFT]();
 
-            if (vf.boundary.dirichhlet_y)
+            if (vf.boundary.dirichlet_y)
                 vf.y(i,j) = 2*vf.boundary.y[LEFT]() - vf.y(i+1,j);
             else
                 vf.y(i,j) = vf.boundary.y[LEFT]();
@@ -45,7 +59,6 @@ void update_boundary_impl (VectorField& vf)
 
 void update_boundary_impl (ScalarField& sf) {
     // modify sf
-    int x = 0;
 }
 
 #if 0

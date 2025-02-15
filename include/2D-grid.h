@@ -1,19 +1,19 @@
-#ifndef 2D_GRID_H
-#define 2D_GRID_H
+#ifndef GRID_2D_H
+#define GRID_2D_H
 
 
 #include <cstdlib>
 #include <cstdio>
+#include <iostream>
 #include <functional>
 #include <cmath>
 #include <vector>
-#include "timstep.h"
-#include "math.h"
+//#include "timestep.h"
+//#include "math.h"
 
 
 const int dimension = 2;
 const int ghost = 1;    // layers of ghost cells around a domain boundary
-double delta = 1.;
 
 
 #define FOREACH_CELL() \
@@ -22,8 +22,8 @@ double delta = 1.;
 
 
 #define FOREACH() \
-    for (int i = ghost; i < grid.col - 2*ghost; ++i) \
-        for (int j = ghost; j < grid.row - 2*ghost; ++j)
+    for (int i = ghost; i < grid.col - ghost; ++i) \
+        for (int j = ghost; j < grid.row - ghost; ++j)
 
 
 enum Boundaries {
@@ -35,43 +35,12 @@ enum Boundaries {
 };
 
 
-struct Grid 
-{
-    double width, height;
-    int level;
-
-    double delta;
-    int row, col;
-
-    std::vector<double> x;
-    std::vector<double> y;
-
-    Grid() = default;
-
-    Grid(double widthf, double heightf, int levelf)
-        : heightf(height), width(width), level(levelf)
-    {
-        col(pow(2, level) + 2*ghost); row(pow(2, level) + 2*ghost);
-        x((col * row), 0.0);
-        y((col * row), 0.0);
-
-        delta(max(width, height) / ((double) pow(2, levelf)));
-    }
-};
-
-
-Grid grid;
-
-
 struct Array2D
 {
     int nx = 0, ny = 0;
     std::vector<double> data;
-    
-    Array2D() : 
-        nx(grid.row), ny(grid.col), data(grid.width * grid.height, 0.0)
-    {
-    }
+   
+    Array2D() = default;
 
     Array2D(int rows, int cols, double initVal = 0.0)
         : nx(rows), ny(cols), data(rows * cols, initVal)
@@ -96,6 +65,46 @@ struct Array2D
 };
 
 
+struct Grid 
+{
+    double width, height;
+    int level;
+
+    double delta;
+    int row, col;
+
+    Array2D x;
+    Array2D y;
+
+    Grid() = default;
+
+    Grid(double widthf, double heightf, int levelf)
+        : width(widthf), height(heightf), level(levelf)
+    {
+        int size = pow(2, level) + 2*ghost;
+        col = size; row = size;
+        x.resize((col * row), 0.0);
+        y.resize((col * row), 0.0);
+
+        delta = fmax(width, height) / ((double) pow(2, levelf));
+    }
+
+    void resize (double widthf, double heightf, int levelf)
+    {
+        width = widthf, height = heightf, level = levelf;
+        int size = pow(2, level) + 2*ghost;
+        col = size; row = size;
+        x.resize(row, col, 0.0);
+        y.resize(row, col, 0.0);
+
+        delta = fmax(width, height) / ((double) pow(2, levelf));
+    }
+};
+
+
+extern Grid grid;
+
+
 struct Boundary
 {
     std::array<std::function<double()>, NUM_BOUNDARIES> x;
@@ -113,8 +122,8 @@ struct VectorField
     VectorField() :
         nx(grid.row), ny(grid.col)
     {
-        x(grid.row, grid.col, 0.0);
-        y(grid.row, grid.col, 0.0);
+        x.resize(grid.row, grid.col, 0.0);
+        y.resize(grid.row, grid.col, 0.0);
     }
 
     VectorField(int rows, int cols, double initVal = 0.0)
@@ -142,7 +151,7 @@ struct ScalarField
     }
 
     ScalarField(int rows, int cols, double initVal = 0.0)
-        nx(grid.col), ny(grid.row), data(grid.col * grid.row, initVal)
+        : nx(grid.col), ny(grid.row), data(grid.col * grid.row, initVal)
     {
     }
 
@@ -178,7 +187,7 @@ void update_boundary_impl (VectorField& vf);
 void update_boundary_impl (ScalarField& vf);
 
 
-template <template... Fields>
+template <typename... Fields>
 void update_boundary (Fields&... fields) {
     (update_boundary_impl(fields), ...);
 }
