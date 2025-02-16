@@ -1,11 +1,12 @@
 #include "../../include/2D-grid.h"
-// #include "tracer.h"
+#include "../../include/tracer.h"
 
 
 const double width = 1;
-const int level = 4;
-const double tEnd = 5;
+const int level = 5;
+const double endTime = 5;
 const double mu = 1;
+
 
 #if 0
 void init_u()
@@ -28,18 +29,29 @@ void init_tracer()
 }
 #endif
 
-VectorField pf;
 
+#if 0
 double foo (VectorField pf)
 {
     return pf.x(2,2);
 }
+#endif
 
 int main() {
-    init_grid (width, width, level);
-    std::cout << foo(pf) << "\n";
-    VectorField u;
+    
+    VectorField pf;
+    VectorField test;
 
+    ScalarField p1;
+    ScalarField p2;
+    ScalarField p3;
+    
+    init_grid (width, width, level);
+    //std::cout << foo(pf) << "\n";
+    std::cout << "# of vector fields = " << VectorField::allVectorFields.size() << "\n";
+    std::cout << "# of face vector fields = " << FaceVectorField::allFaceVectorFields.size() << "\n";
+    std::cout << "# of scalar fields = " << ScalarField::allScalarFields.size() << "\n";
+#if 0
     FOREACH()
     {
         u.x(i,j) = -sin(M_PI * (grid.x(i, j))) * cos(M_PI * (grid.y(i, j)));
@@ -47,8 +59,12 @@ int main() {
         std::cout << grid.x(i,j) << " " << grid.y(i,j) << " " <<
                      u.x(i,j) << "" << u.y(i,j) << "\n";
     }
-    //init_u();
-    //run();
+ #endif   
+    std::cout << "# of events = " << events.allEvents.size() << "\n";
+
+    run_events();
+
+    std::cout << "events done\n";
 
     return 0;
 }

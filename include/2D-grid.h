@@ -4,13 +4,17 @@
 
 #include <cstdlib>
 #include <cstdio>
+#include <cassert>
 #include <iostream>
 #include <functional>
 #include <cmath>
 #include <vector>
+#include "events.h"
 //#include "timestep.h"
 //#include "math.h"
 
+#define DCOL 6  // defualt # of columns
+#define DROW 6  // defualt # of rows
 
 const int dimension = 2;
 const int ghost = 1;    // layers of ghost cells around a domain boundary
@@ -55,11 +59,15 @@ struct Array2D
 
     double& operator()(int i, int j)
     {
+        assert(i >= 0 && i < nx);
+        assert(j >= 0 && j < ny);
         return data[i * ny + j];
     }
 
     double operator()(int i, int j) const
     {
+        assert(i >= 0 && i < nx);
+        assert(j >= 0 && j < ny);
         return data[i * ny + j];
     }
 };
@@ -73,8 +81,7 @@ struct Grid
     double delta;
     int row, col;
 
-    Array2D x;
-    Array2D y;
+    Array2D x, y;
 
     Grid() = default;
 
@@ -110,7 +117,17 @@ struct Boundary
     std::array<std::function<double()>, NUM_BOUNDARIES> x;
     std::array<std::function<double()>, NUM_BOUNDARIES> y;
 
-    bool dirichlet_x = false, dirichlet_y = false;
+    std::array<bool, NUM_BOUNDARIES> dirichlet_x;
+    std::array<bool, NUM_BOUNDARIES> dirichlet_y;
+    
+    Boundary()
+    {
+        for (int k = LEFT; k < NUM_BOUNDARIES; ++k)
+        {
+            dirichlet_x[k] = false;
+            dirichlet_y[k] = false;
+        }
+    }
 };
 
 
@@ -120,23 +137,62 @@ struct VectorField
     Array2D x, y;
 
     VectorField() :
-        nx(grid.row), ny(grid.col)
+        nx(DROW), ny(DCOL)
     {
-        x.resize(grid.row, grid.col, 0.0);
-        y.resize(grid.row, grid.col, 0.0);
+        x.resize(DROW, DCOL, 0.0);
+        y.resize(DROW, DCOL, 0.0);
+
+        allVectorFields.push_back(this);
     }
 
     VectorField(int rows, int cols, double initVal = 0.0)
         : x(rows, cols, initVal), y(rows, cols, initVal)
     {
+        // allVectorFields.push_back(this);
     }
 
     void resize(int rows, int cols, int newVal = 0.0)
     {
+        nx = cols; ny = rows;
         x.resize(rows, cols, newVal); y.resize(rows, cols, newVal);
     }
 
     Boundary boundary;
+
+    static std::vector<VectorField*> allVectorFields;
+
+};
+
+
+struct FaceVectorField
+{
+    int nx = 0, ny = 0;
+    Array2D x, y;
+
+    FaceVectorField() :
+        nx(DROW), ny(DCOL)
+    {
+        x.resize(DROW, DCOL, 0.0);
+        y.resize(DROW, DCOL, 0.0);
+
+        allFaceVectorFields.push_back(this);
+    }
+
+    FaceVectorField(int rows, int cols, double initVal = 0.0)
+        : x(rows, cols, initVal), y(rows, cols, initVal)
+    {
+        allFaceVectorFields.push_back(this);
+    }
+
+    void resize(int rows, int cols, int newVal = 0.0)
+    {
+        nx = cols; ny = rows;
+        x.resize(rows, cols, newVal); y.resize(rows, cols, newVal);
+    }
+
+    Boundary boundary;
+
+    static std::vector<FaceVectorField*> allFaceVectorFields;
 };
 
 
@@ -146,13 +202,23 @@ struct ScalarField
     std::vector<double> data;
 
     ScalarField() :
-        nx(grid.col), ny(grid.row), data(grid.col * grid.row, 0.0)
+        nx(DCOL), ny(DROW), data(DCOL * DROW, 0.0)
     {
+        allScalarFields.push_back(this);
+        for (int k = LEFT; k < NUM_BOUNDARIES; ++k)
+        {
+            dirichlet[k] = false;
+        }
     }
 
     ScalarField(int rows, int cols, double initVal = 0.0)
         : nx(grid.col), ny(grid.row), data(grid.col * grid.row, initVal)
     {
+        allScalarFields.push_back(this);
+        for (int k = LEFT; k < NUM_BOUNDARIES; ++k)
+        {
+            dirichlet[k] = false;
+        }
     }
 
     void resize(int rows, int cols, double newVal = 0.0)
@@ -171,7 +237,11 @@ struct ScalarField
         return data[i * ny + j];
     }
 
-    Boundary boundary;
+    static std::vector<ScalarField*> allScalarFields;
+
+    std::array<std::function<double()>, NUM_BOUNDARIES> boundary;
+
+    std::array<bool, NUM_BOUNDARIES> dirichlet;
 };
 
 
@@ -186,6 +256,8 @@ void update_boundary_impl (VectorField& vf);
 
 void update_boundary_impl (ScalarField& vf);
 
+
+void update_boundary_impl (FaceVectorField& vf);
 
 template <typename... Fields>
 void update_boundary (Fields&... fields) {
