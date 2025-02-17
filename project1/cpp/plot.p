@@ -9,12 +9,12 @@ set size square
 
 set cbrange [0:0.5]
 
-folder = "upwind-nomu"
-timestep = "1000"
+folder = "upwind-mu"
+timestep = "780000"
 
 set title "Tracer Field @i=".timestep." | ".folder."" font ",14"
 
-plot for [f in system("ls folder/".folder."/".timestep."-tracer-*")] f using 1:2:5 w image
+plot for [f in system("ls data/".folder."/".timestep."-tracer-*")] f using 1:2:5 w image
 
 
 

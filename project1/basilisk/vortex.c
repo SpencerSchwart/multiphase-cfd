@@ -1,5 +1,5 @@
 #include "grid/multigrid.h"
-#define UPWIND 1
+#define UPWIND 0
 #include "tracer-ad.h"
 
 #define L0 1.
@@ -54,7 +54,13 @@ event log (i++; t < end_time)
 event output (i += 100)
 {
     char name[80];
-    sprintf (name, "tracer/%d-tracer-%g.png", i, t);
+    sprintf (name, "tracer/%d-tracer-%g", i, t);
+    FILE * fp = fopen (name, "w");
+    output_field ({tracer}, fp);
+    fclose(fp);
+    /*
     output_ppm (tracer, file = name, box = {{0,0},{L0,L0}},
                 n = 500, min = 0, max = 0.5);
+    */
 }
+
