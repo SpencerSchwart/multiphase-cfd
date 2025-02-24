@@ -33,16 +33,28 @@ inline double central_y (T& field, int i, int j, double dy)
     return (field(i,j + 1) - field(i, j - 1)) / (2 * dy);
 }
 
+template <typename T>
+inline double central_second_x (T& field, int i, int j, double dx)
+{
+    return (field(i+1,j) - 2*field(i,j) + field(i-1,j)) / sq(dx);
+}
 
 template <typename T>
-inline double face_flux_x (T& field, int i, int j, double dx)
+inline double central_second_y (T& field, int i, int j, double dy)
+{
+    return (field(i,j+1) - 2*field(i,j) + field(i,j-1)) / sq(dy);
+}
+
+
+template <typename T>
+inline double face_gradient_x (T& field, int i, int j, double dx)
 {
     return (field(i,j) - field(i-1,j)) / dx;
 }
 
 
 template <typename T>
-inline double face_flux_y (T& field, int i, int j, double dy)
+inline double face_gradient_y (T& field, int i, int j, double dy)
 {
     return (field(i,j) - field(i,j-1)) / dy;
 }

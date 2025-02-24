@@ -1,9 +1,7 @@
 #include "../include/timestep.h"
 
-
 const double cfl = 0.5;
-
-
+double dtmax = 0.01;
 /*
 TODO: add feature to search for max value of mu
 */
@@ -29,3 +27,13 @@ void set_timestep (FaceVectorField& uf, double& dt, double dx, FaceVectorField m
         dt = fmin(dt, dtVisc);
     }
 }
+
+void stability (int istep, double t, double& dt)
+{
+    if (uf.empty())
+        dt = dtmax;
+    else
+        set_timestep (uf, dt, grid.delta, mu);
+}
+
+Event timestep_event (stability, "stability");

@@ -1,3 +1,8 @@
+#ifndef NAVIER_STOKES_H
+#define NAVIER_STOKES_H
+
+#include "2D-grid.h"
+#include "methods.h"
 
 extern VectorField u;
 
@@ -6,11 +11,4 @@ extern FaceVectorField mu;
 
 extern ScalarField p;
 
-static void advection_term (int istep, double t, double dt);
-
-
-static void viscous_term (int istep, double t, double dt);
-
-
-static void pressure_correction (int istep, double t, double dt);
-
+#endif // NAVIER_STOKES_H

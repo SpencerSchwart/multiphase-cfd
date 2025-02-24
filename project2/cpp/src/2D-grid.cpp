@@ -1,13 +1,44 @@
 #include "../include/2D-grid.h"
 
 
-double delta = 1.;
 Grid grid;
 Array2D& x = grid.x, y = grid.y;
+double& delta = grid.delta;
 
 std::vector<VectorField*> VectorField::allVectorFields;
 std::vector<ScalarField*> ScalarField::allScalarFields;
 std::vector<FaceVectorField*> FaceVectorField::allFaceVectorFields;
+
+
+bool VectorField::empty()
+{
+    FOREACH()
+    {
+        if (x(i,j) || y(i,j))
+            return false;
+    }
+    return true;
+}
+
+bool FaceVectorField::empty()
+{
+    FOREACH() // should be foreach face
+    {
+        if (x(i,j) != 0. || y(i,j) != 0.) 
+            return false;
+    }
+    return true;
+}
+
+bool ScalarField::empty()
+{
+    FOREACH()
+    {
+        if (data[i * ny + j])
+            return false;
+    }
+    return true;
+}
 
 
 void init_grid (double width, double height, int level)
@@ -51,24 +82,6 @@ bool is_ghost_cell (int i, int j)
 {
     return (i < ghost || j < ghost || i > grid.col - ghost || j > grid.row - ghost);
 
-}
-
-
-void no_slip_boundary (VectorField& vf, Boundaries boundary, double val)
-{
-    vf.boundary.dirichlet_x[boundary] = true;
-    vf.boundary.dirichlet_y[boundary] = true;
-    vf.boundary.x[boundary] = [&]() -> double {return val;};
-    vf.boundary.y[boundary] = [&]() -> double {return val;};
-}
-
-
-void no_slip_boundary (FaceVectorField& vf, Boundaries boundary, double val)
-{
-    vf.boundary.dirichlet_x[boundary] = true;
-    vf.boundary.dirichlet_y[boundary] = true;
-    vf.boundary.x[boundary] = [&]() -> double {return val;};
-    vf.boundary.y[boundary] = [&]() -> double {return val;};
 }
 
 
@@ -273,19 +286,3 @@ void update_boundary_impl (FaceVectorField& vf)
     }
 }
 
-#if 0
-VectorField f();
-VectorField u();
-VectorField uf();
-ScalarField p();
-
-update_boundary (f, u, uf, p);
-
-VectorField f();
-f.boundary.x[LEFT] = [&]() -> double {
-    return x + y;
-}
-
-if (f.boundary.dirichlet_x)
-f.x(i,j) = f.boundary.x[LEFT](); 
-#endif

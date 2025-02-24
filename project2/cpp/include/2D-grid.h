@@ -11,12 +11,14 @@
 #include <vector>
 #include "math.h"
 
-#define DCOL grid.col  // defualt # of columns
-#define DROW grid.row  // defualt # of rows
+#define DCOL (grid.col)  // defualt # of columns
+#define DROW (grid.row)  // defualt # of rows
 
 const int dimension = 2;
 const int ghost = 1;    // layers of ghost cells around a domain boundary
-extern double delta;
+extern double& delta;
+
+#define dv() (sq(delta))
 
 
 #define FOREACH_CELL() \
@@ -156,7 +158,7 @@ struct VectorField
     VectorField(int rows, int cols, double initVal = 0.0)
         : x(rows, cols, initVal), y(rows, cols, initVal)
     {
-        // allVectorFields.push_back(this);
+        allVectorFields.push_back(this);
     }
 
     void resize(int rows, int cols, int newVal = 0.0)
@@ -164,6 +166,8 @@ struct VectorField
         nx = cols; ny = rows;
         x.resize(rows, cols, newVal); y.resize(rows, cols, newVal);
     }
+
+    bool empty();
 
     Boundary boundary;
 
@@ -197,6 +201,8 @@ struct FaceVectorField
         nx = cols; ny = rows;
         x.resize(rows, cols, newVal); y.resize(rows, cols, newVal);
     }
+
+    bool empty();
 
     Boundary boundary;
 
@@ -245,6 +251,8 @@ struct ScalarField
         return data[i * ny + j];
     }
 
+    bool empty();
+
     static std::vector<ScalarField*> allScalarFields;
 
     std::array<std::function<double()>, NUM_BOUNDARIES> boundary;
@@ -259,10 +267,28 @@ void init_grid (double width, double height, int level);
 bool is_ghost_cell (int i, int j);
 
 
-void no_slip_boundary (VectorField& vf, Boundaries boundary, double val);
+template <typename T>
+void dirichlet_boundary (T& vf, Boundaries boundary, double val)
+{
+    vf.boundary.dirichlet_x[boundary] = true;
+    vf.boundary.dirichlet_y[boundary] = true;
+    vf.boundary.x[boundary] = [&]() -> double {return val;};
+    vf.boundary.y[boundary] = [&]() -> double {return val;};
+}
 
+template <typename T>
+void dirichlet_boundary_x (T& vf, Boundaries boundary, double val)
+{
+    vf.boundary.dirichlet_x[boundary] = true;
+    vf.boundary.x[boundary] = [&]() -> double {return val;};
+}
 
-void no_slip_boundary (FaceVectorField& vf, Boundaries boundary, double val);
+template <typename T>
+void dirichlet_boundary_y (T& vf, Boundaries boundary, double val)
+{
+    vf.boundary.dirichlet_y[boundary] = true;
+    vf.boundary.y[boundary] = [&]() -> double {return val;};
+}
 
 
 void outlet_boundary (ScalarField& sf, Boundaries boundary);
@@ -281,7 +307,6 @@ template <typename... Fields>
 void update_boundary (Fields&... fields) {
     (update_boundary_impl(fields), ...);
 }
-
 
 #include "events.h"
 #endif // 2D_GRID_H

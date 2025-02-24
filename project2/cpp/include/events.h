@@ -10,39 +10,42 @@ extern FaceVectorField uf;
 extern FaceVectorField mu;
 extern const double endTime;
 
-struct Events
+struct Event
 {
-    using Event = std::function<void(int,double,double)>;
-    
-    void addEvent (const Event& func)
-    {
-        allEvents.push_back(func);
-    }
+    using Function = std::function<void(int,double,double&)>;
 
-    void runEvents (int i, double t, double dt)
+    Function func;
+    std::string name;
+
+    Event() = default;
+
+    Event(const Function &userFunc, const std::string &userName, int index = -1)
     {
-        for (const auto& func : allEvents)
+        func = userFunc;
+        name = userName;
+        if (index == -1)
+            allEvents.push_back(this);
+        else 
         {
-            func(i, t, dt);
+            assert(index >= 0 
+                && static_cast<size_t>(index) <= allEvents.size()
+                && "ERROR: starting index for event is out of range!");
+                
+            allEvents.insert(allEvents.begin() + index, this);
         }
     }
 
-    std::vector<Event> allEvents;
+    static std::vector<Event*> allEvents;
 };
 
-extern Events events;
+struct EventsManager
+{   
+    void runEvents(int i, double t, double dt);
 
-struct SetEvent
-{
-    using Event = std::function<void(int,double,double)>;
-
-    SetEvent() = default;
-
-    SetEvent(const Event& func)
-    {
-        events.addEvent(func);
-    }
+    void printEvents();
 };
+
+extern EventsManager events;
 
 void run_events();
 

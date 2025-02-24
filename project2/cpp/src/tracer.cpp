@@ -101,6 +101,6 @@ static void solve (int istep, double time, double dt)
 }
 
 
-static SetEvent event(solve);
+static Event event(solve, "tracer");
 
 
