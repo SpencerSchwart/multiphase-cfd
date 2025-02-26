@@ -272,22 +272,22 @@ void dirichlet_boundary (T& vf, Boundaries boundary, double val)
 {
     vf.boundary.dirichlet_x[boundary] = true;
     vf.boundary.dirichlet_y[boundary] = true;
-    vf.boundary.x[boundary] = [&]() -> double {return val;};
-    vf.boundary.y[boundary] = [&]() -> double {return val;};
+    vf.boundary.x[boundary] = [val]() -> double {return val;};
+    vf.boundary.y[boundary] = [val]() -> double {return val;};
 }
 
 template <typename T>
 void dirichlet_boundary_x (T& vf, Boundaries boundary, double val)
 {
     vf.boundary.dirichlet_x[boundary] = true;
-    vf.boundary.x[boundary] = [&]() -> double {return val;};
+    vf.boundary.x[boundary] = [val]() -> double {return val;};
 }
 
 template <typename T>
 void dirichlet_boundary_y (T& vf, Boundaries boundary, double val)
 {
     vf.boundary.dirichlet_y[boundary] = true;
-    vf.boundary.y[boundary] = [&]() -> double {return val;};
+    vf.boundary.y[boundary] = [val]() -> double {return val;};
 }
 
 

@@ -23,7 +23,7 @@ void set_timestep (FaceVectorField& uf, double& dt, double dx, FaceVectorField m
     
     if (mu.x(1,1)) // IMPROVE
     {
-        double dtVisc = (dx*dx / (4 * mu.x(1,1))) / 1.2; // viscous timestep constraint
+        double dtVisc = (sq(dx) / (4 * mu.x(1,1))) / 2; // viscous timestep constraint
         dt = fmin(dt, dtVisc);
     }
 }
@@ -36,4 +36,4 @@ void stability (int istep, double t, double& dt)
         set_timestep (uf, dt, grid.delta, mu);
 }
 
-Event timestep_event (stability, "stability");
+//Event timestep_event (stability, "stability");

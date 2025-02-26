@@ -5,6 +5,9 @@
 #include "methods.h"
 
 extern VectorField u;
+extern VectorField us;
+
+extern ScalarField error;
 
 extern FaceVectorField uf;
 extern FaceVectorField mu;

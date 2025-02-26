@@ -22,7 +22,7 @@ bool VectorField::empty()
 
 bool FaceVectorField::empty()
 {
-    FOREACH() // should be foreach face
+    FOREACH_CELL() // should be foreach face
     {
         if (x(i,j) != 0. || y(i,j) != 0.) 
             return false;
@@ -136,7 +136,6 @@ void update_boundary_impl (VectorField& vf)
                 vf.x(i,j) = 2*vf.boundary.x[TOP]() - vf.x(i,j-1);
             else
                 vf.x(i,j) = vf.x(i,j-1);
-
             if (vf.boundary.dirichlet_y[TOP])
                 vf.y(i,j) = 2*vf.boundary.y[TOP]() - vf.y(i,j-1);
             else

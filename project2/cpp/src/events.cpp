@@ -25,7 +25,7 @@ void EventsManager::printEvents()
     }
 }
 
-
+extern VectorField u;
 void run_events()
 {
     double time = 0., dt = 0.1;
@@ -34,8 +34,11 @@ void run_events()
     while (time <= endTime)
     {
         //if (istep > 0) set_timestep(uf, dt, grid.delta, mu);
-        std::cout << dt << " in event loop " << Event::allEvents.size() << "\n";
+        std::cout << istep << " " << time << " " << dt << " " 
+                  << Event::allEvents.size() << "\n";
         events.runEvents(istep, time, dt);
+        stability (istep, time, dt);
+        //std::cout << "top =" << u.boundary.x[TOP]() << "\n";
         time += dt;
 #if 0
         if (time > endTime && time - dt < endTime)
