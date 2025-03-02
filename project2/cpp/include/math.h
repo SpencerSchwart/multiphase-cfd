@@ -7,8 +7,14 @@ template <typename T>
 inline T sq(T x)
 {
     return x * x;
-};
+}
 
+
+template <typename T>
+inline int sign(T x)
+{
+    return x < 0? -1: 1;
+}
 
 struct Coord 
 {

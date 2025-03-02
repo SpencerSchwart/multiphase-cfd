@@ -49,6 +49,12 @@ enum Boundaries {
 };
 
 
+struct Point
+{
+    int i, j;
+};
+
+
 struct Array2D
 {
     int nx = 0, ny = 0;
@@ -267,6 +273,8 @@ void init_grid (double width, double height, int level);
 bool is_ghost_cell (int i, int j);
 
 
+Point locate (double x, double y);
+
 template <typename T>
 void dirichlet_boundary (T& vf, Boundaries boundary, double val)
 {
@@ -307,6 +315,23 @@ template <typename... Fields>
 void update_boundary (Fields&... fields) {
     (update_boundary_impl(fields), ...);
 }
+
+
+template <typename T>
+double interpolate_bi (Point point, T field, double xp, double yp)
+{
+    int i = point.i, j = point.j;
+    double xi = (xp - grid.x(i,j))/delta;
+    double yi = (xp - grid.x(i,j))/delta;
+
+    int offx = sign(xi), offy = sign(yi);
+    xi = fabs(xi), yi = fabs(yi);
+    return 1;
+    //return ((field));
+}
+
+
+extern Array2D& x, y; // doesn't work
 
 #include "events.h"
 #endif // 2D_GRID_H

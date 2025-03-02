@@ -1,12 +1,12 @@
 #include "../include/timestep.h"
 
 const double cfl = 0.5;
-double dtmax = 0.01;
+double dtmax = 0.0001;
 /*
 TODO: add feature to search for max value of mu
 */
 
-void set_timestep (FaceVectorField& uf, double& dt, double dx, FaceVectorField mu)
+void set_timestep (FaceVectorField& uf, double& dt, double dx, FaceVectorField& mu)
 {
     double maxu = 0;
     FOREACH()
@@ -21,11 +21,13 @@ void set_timestep (FaceVectorField& uf, double& dt, double dx, FaceVectorField m
     assert (maxu > 0 && "ERROR: All velocity in the domain is zero");
     dt = cfl * dx / maxu;
     
-    if (mu.x(1,1)) // IMPROVE
+    if (mu.x(2,2)) // IMPROVE
     {
-        double dtVisc = (sq(dx) / (4 * mu.x(1,1))) / 2; // viscous timestep constraint
+        double dtVisc = (sq(dx) / (4 * mu.x(2,2))) / 1.2; // viscous timestep constraint
+        //std::cout << dt << " " << dtVisc << " " << dx << " " << mu.x(2,2) << "\n";
         dt = fmin(dt, dtVisc);
     }
+    dt = fmin(dt, dtmax);
 }
 
 void stability (int istep, double t, double& dt)

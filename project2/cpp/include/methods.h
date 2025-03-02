@@ -47,14 +47,14 @@ inline double central_second_y (T& field, int i, int j, double dy)
 
 
 template <typename T>
-inline double face_gradient_x (T& field, int i, int j, double dx)
+inline double face_gradient_x (T& field, int i, int j, double dx = delta)
 {
     return (field(i,j) - field(i-1,j)) / dx;
 }
 
 
 template <typename T>
-inline double face_gradient_y (T& field, int i, int j, double dy)
+inline double face_gradient_y (T& field, int i, int j, double dy = delta)
 {
     return (field(i,j) - field(i,j-1)) / dy;
 }
@@ -72,5 +72,6 @@ inline double face_value_y (T& field, int i, int j)
 {
     return (field(i,j) + field(i,j-1)) / 2.;
 }
+
 
 #endif // METHODS_H

@@ -9,7 +9,7 @@ extern FaceVectorField mu;
 extern const double timeEnd;
 extern double dtmax;
 
-void set_timestep (FaceVectorField& uf, double& dt, double dx, FaceVectorField mu);
+void set_timestep (FaceVectorField& uf, double& dt, double dx, FaceVectorField& mu);
 
 void stability (int istep, double t, double& dt);
 

@@ -85,6 +85,15 @@ bool is_ghost_cell (int i, int j)
 }
 
 
+Point locate (double xp, double yp)
+{
+    Point point;
+    point.i = xp / grid.width * grid.col + ghost;
+    point.j = yp / grid.height * grid.row + ghost;
+    return point;
+}
+
+
 void outlet_boundary (ScalarField& sf, Boundaries boundary)
 {
     sf.dirichlet[boundary] = true;

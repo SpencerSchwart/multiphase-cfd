@@ -10,6 +10,6 @@ RE=${RE:-0}
 
 CONSTANTS="-DUPWIND=$UPWIND -DMU=$MU"
 
-SOURCES="src/2D-grid.cpp src/events.cpp src/timestep.cpp src/navier-stokes.cpp lid.cpp"
+SOURCES="src/2D-grid.cpp src/events.cpp src/timestep.cpp src/navier-stokes.cpp src/tracer.cpp lid.cpp"
 
 g++ $CPPFLAGS $SOURCES $CONSTANTS -o $OUTPUT
