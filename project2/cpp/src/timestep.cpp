@@ -1,15 +1,16 @@
 #include "../include/timestep.h"
 
 const double cfl = 0.5;
-double dtmax = 0.0001;
+double dtmax = 0.01;
+
 /*
 TODO: add feature to search for max value of mu
 */
 
-void set_timestep (FaceVectorField& uf, double& dt, double dx, FaceVectorField& mu)
+double set_timestep (FaceVectorField& uf, FaceVectorField& mu, double dx = delta)
 {
     double maxu = -1e30;
-    FOREACH()
+    FOREACH_CELL()
     {
         if (fabs(uf.x(i,j)) > maxu && fabs(uf.x(i,j)) > 0) 
             maxu = fabs(uf.x(i,j));
@@ -19,23 +20,24 @@ void set_timestep (FaceVectorField& uf, double& dt, double dx, FaceVectorField& 
     }
     
     assert (maxu > 0 && "ERROR: All velocity in the domain is zero");
-    dt = cfl * dx / maxu;
+    double dt = cfl * dx / maxu;
     
     if (mu.x(2,2)) // IMPROVE
     {
         double dtVisc = (sq(dx) / (4 * mu.x(2,2))) / 1.2; // viscous timestep constraint
-        //std::cout << dt << " " << dtVisc << " " << dx << " " << mu.x(2,2) << "\n";
         dt = fmin(dt, dtVisc);
     }
-    dt = fmin(dt, dtmax);
+    return fmin(dt, dtmax);
 }
 
 void stability (int istep, double t, double& dt)
 {
     if (uf.empty())
         dt = dtmax;
-    else
-        set_timestep (uf, dt, grid.delta, mu);
+    else {
+        dt = set_timestep (uf, mu);
+    }
 }
 
+// why can't I set dt in an event? scope issue?
 //Event timestep_event (stability, "stability");

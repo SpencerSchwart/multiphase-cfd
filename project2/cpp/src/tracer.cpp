@@ -5,6 +5,7 @@ ScalarField tracer; // passive tracer field
 
 FaceVectorField tracerf;
 
+extern VectorField u;
 
 static void tracer_flux (ScalarField& tracer, FaceVectorField& tracerf, FaceVectorField& flux)
 {

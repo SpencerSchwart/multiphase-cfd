@@ -8,7 +8,9 @@
 
 extern FaceVectorField uf;
 extern FaceVectorField mu;
-extern const double endTime;
+extern const double tend;
+
+extern bool stop;
 
 struct Event
 {
@@ -46,6 +48,7 @@ struct EventsManager
 };
 
 extern EventsManager events;
+
 
 void run_events();
 

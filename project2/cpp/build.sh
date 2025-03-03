@@ -8,7 +8,7 @@ UPWIND=${UPWIND:-0}
 
 RE=${RE:-0}
 
-CONSTANTS="-DUPWIND=$UPWIND -DMU=$MU"
+CONSTANTS="-DUPWIND=$UPWIND -DRE=$RE"
 
 SOURCES="src/2D-grid.cpp src/events.cpp src/timestep.cpp src/navier-stokes.cpp src/tracer.cpp lid.cpp"
 

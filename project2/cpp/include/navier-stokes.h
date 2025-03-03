@@ -14,4 +14,12 @@ extern FaceVectorField mu;
 
 extern ScalarField p;
 
+struct GSsolver
+{
+    int i;       // # of iterations
+    double maxe; // maximum error
+};
+
+extern GSsolver project;
+
 #endif // NAVIER_STOKES_H

@@ -1,4 +1,5 @@
 #include "../include/2D-grid.h"
+#include "../include/methods.h"
 
 
 Grid grid;
@@ -294,3 +295,10 @@ void update_boundary_impl (FaceVectorField& vf)
     }
 }
 
+void fill_facefield (FaceVectorField& uf, VectorField& u)
+{
+    FOREACH_FACE_X()
+        uf.x(i,j) = face_value_x(u.x,i,j);
+    FOREACH_FACE_Y()
+        uf.y(i,j) = face_value_y(u.y,i,j);
+}

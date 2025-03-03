@@ -317,6 +317,9 @@ void update_boundary (Fields&... fields) {
 }
 
 
+void fill_facefield (FaceVectorField& uf, VectorField& u);
+
+
 template <typename T>
 double interpolate_bi (Point point, T field, double xp, double yp)
 {
@@ -326,7 +329,8 @@ double interpolate_bi (Point point, T field, double xp, double yp)
 
     int offx = sign(xi), offy = sign(yi);
     xi = fabs(xi), yi = fabs(yi);
-    return 1;
+    return ((field(i,j)*(1. - xi) + field(i + offx,j)*xi)*(1. - yi) +
+            (field(i,j+offy)*(1. - xi) + field(i+offx,j+offy)*xi)*yi);
     //return ((field));
 }
 
