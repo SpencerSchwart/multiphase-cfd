@@ -49,7 +49,7 @@ static void advection_term (int istep, double t, double dt)
 
     update_boundary(uf);
 
-    FaceVectorField flux;
+    VectorField flux;
     FOREACH()
     {
         flux.x(i,j) = sq(uf.x(i+1,j)) - sq(uf.x(i,j)) + 
@@ -132,7 +132,7 @@ static void pressure_correction (int istep, double t, double dt)
         div(i,j) = (uf.x(i+1,j)-uf.x(i,j)+uf.y(i,j+1)-uf.y(i,j))/(dt*delta);
     
     int iter = 0;
-    for(iter = 1; iter < N_MAX; ++iter)
+    for (iter = 1; iter < N_MAX; ++iter)
     {
         FOREACH()
             p(i,j) = (p(i+1,j) + p(i-1,j) + p(i,j+1) + p(i,j-1) - dv()*div(i,j))/4.;

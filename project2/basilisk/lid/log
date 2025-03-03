@@ -1,0 +1,11 @@
+0 0 1 0
+1 0.0015 1 0
+2 0.003 44 0.000995596
+3 0.0045 500 0.00443719
+4 0.006 500 -4310.58
+5 0.0075 500 -5.0247e+16
+6 0.009 500 -4.05129e+43
+7 0.0105 500 2.34554e+96
+././navier-stokes.h:54:error: [Thread debugging using libthread_db enabled]
+././navier-stokes.h:54:error: Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+././navier-stokes.h:54:error: Program received signal SIGFPE, Arithmetic exception.
