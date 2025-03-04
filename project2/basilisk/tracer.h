@@ -1,42 +1,10 @@
 scalar tracer[];
 
-#if 0
-double timestep (const face vector u, double dtmax)
-{
-    static double previous = 0.;
-    double delta = 0;
-    if (t == 0.) previous = 0.;
-    dtmax /= CFL;
-    foreach_face() {
-        if (u.x[] != 0.) {
-            double dt = Delta/fabs(u.x[]);
-            if (dt < dtmax) dtmax = dt;
-            delta = Delta;
-        }
-    }
-    dtmax *= CFL;
-
-    if (viscosity) {
-        double dtvisc = (sq(delta) / (4*viscosity)) / 1.2;
-        dtmax = min(dtmax, dtvisc);
-    }
-
-    if (dtmax > previous)
-        dtmax = (previous + 0.1*dtmax)/1.1;
-    previous = dtmax;
-    return dtmax;
-}
-#endif
-
 face vector tracerf[];
 face vector tflux[];
 
 event tracer (i++)
 {
-
-    //double dt = timestep(uf, DT);
-    //dt = dtnext(dt);
-    
     // 1. calculate the flux for each face
     foreach_face() {
 #if UPWIND

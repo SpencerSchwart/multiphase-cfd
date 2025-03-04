@@ -14,8 +14,8 @@ v = data[:, 3]
 
 xi = np.unique(x)
 yi = np.unique(y)
-nx = len(xi)
-ny = len(yi)
+#nx = len(xi)
+#ny = len(yi)
 nx = 1000
 ny = 1000
 
@@ -32,7 +32,7 @@ MAG = np.sqrt((U*U) + (V*V))
 
 plt.figure(figsize=(6,6))
 
-plt.streamplot(X, Y, U, V, color='black')
+plt.streamplot(X, Y, U, V, color='black', density=1.6)
 
 #plt.title('RE = 1000 | Central')
 plt.title(filename)

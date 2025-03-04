@@ -10,7 +10,7 @@
 double uerror = 0;
 
 //const double endTime = 0.00382;
-const double tend = 25;
+const double tend = 20;
 const double size = 1;
 const double u0 = 1;
 const int level = 7;
@@ -173,7 +173,7 @@ int main()
     events.printEvents();
     init_grid(size, size, level);
 
-    dtmax = 0.0015;
+    dtmax = 0.0005;
     run_events();
     events.printEvents();
 

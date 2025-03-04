@@ -19,20 +19,54 @@ typedef struct Solvert
 
 Solvert project;
 
+event defaults (i = 0)
+{
+    foreach_face()
+        mu.x[] = 1;
+}
+
+double timestep (const face vector u, double dtmax)
+{
+    static double previous = 0.;
+    double delta = 0;
+    if (t == 0.) previous = 0.;
+    dtmax /= CFL;
+    foreach_face() {
+        if (u.x[] != 0.) {
+            double dt = Delta/fabs(u.x[]);
+            if (dt < dtmax) dtmax = dt;
+            delta = Delta;
+        }
+    }
+    dtmax *= CFL;
+
+    double maxmu = -1e30;
+    foreach()
+        if (mu.x[] > maxmu)
+            maxmu = mu.x[];
+
+    double dtvisc = (sq(delta) / (4*maxmu)) / 1.2;
+        dtmax = min(dtmax, dtvisc);
+
+    if (dtmax > previous)
+        dtmax = (previous + 0.1*dtmax)/1.1;
+    previous = dtmax;
+    return dtmax;
+}
+
 
 event stability (i++)
 {
-    double dt = DT;
-    dt = dtnext(dt);
+    //double dt = timestep(uf,DT);
+    dt = dtnext(DT);
 }
-
 
 event advection_term (i++)
 {
     vector dp[];
     foreach()
         foreach_dimension()
-            dp.x[] = center_gradient(p);
+            dp.x[] = (p[1] - p[-1]) / (2*Delta);
 
     foreach_face() {
     #if UPWIND
@@ -62,7 +96,6 @@ event advection_term (i++)
         us.y[] = u.y[] - dt*flux.y[]/Delta;
     }
 }
-
 
 event viscous_term (i++)
 {
@@ -147,4 +180,3 @@ event pressure_correction (i++)
 
     boundary({u, uf});
 }
-

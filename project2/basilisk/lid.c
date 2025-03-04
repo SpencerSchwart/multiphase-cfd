@@ -1,13 +1,17 @@
 #include "grid/multigrid.h"
 #include "./navier-stokes.h"
-//#include "./tracer.h"
+#include "./tracer.h"
 
 #define LEVEL 7
 #define L0 1.
 #define U0 1.
-#define RE 1000.
 
-const double tend = 10;
+#ifndef RE
+#define RE 100.
+#endif
+
+const double tend = 15;
+coord line = {0.5,0.5};
 
 u.n[left] = dirichlet(0);
 u.n[right] = dirichlet(0);
@@ -42,12 +46,12 @@ uf.t[bottom] = dirichlet(0);
 int main()
 {
     N = 1 << LEVEL;
-    DT = 0.0015;
+    DT = 0.0005;
+
     run();
     return 0;
 }
 
-scalar tracer[];
 event init (i = 0)
 {
     foreach() {
@@ -66,4 +70,43 @@ event init (i = 0)
 event logfile (i++; t <= tend)
 {
     fprintf(stderr, "%d %g %d %g\n", i, t, project.i, project.maxe);
+}
+
+event output (i += 500)
+{
+    char name[80];
+    sprintf(name, "%d-snapshot-%g", i, t);
+    FILE * fp = fopen(name, "w");
+    output_field ({u.x, u.y, p, error, tracer}, fp = fp);   
+}
+
+event final_output (t = end)
+{
+    double delta = L0 / (pow(2,LEVEL));
+
+    char name[80];
+    sprintf(name, "final-xcut");
+    FILE * fp = fopen(name, "w");
+    for (double j = 0; j <= L0; j+=delta) {
+        foreach_point(0.5, j) {
+            double uint = interpolate_linear (point, u.x, line.x, y, 0);
+            double vint = interpolate_linear (point, u.y, line.x, y, 0);
+            fprintf(fp, "%g %g %g %g %g %g %g\n", 
+                         x, y, u.x[], u.y[], uint, vint, p[]);
+        }
+    }
+    sprintf(name, "final-ycut");
+    FILE * fp1 = fopen(name, "w");
+    for (double i = 0; i <= L0; i+=delta) {
+        foreach_point(i, line.y) {
+            double uint = interpolate_linear (point, u.x, x, line.y, 0);
+            double vint = interpolate_linear (point, u.y, x, line.y, 0);
+            fprintf(fp1, "%g %g %g %g %g %g %g\n", 
+                         x, y, u.x[], u.y[], uint, vint, p[]);
+        }
+    }
+    sprintf(name, "final-snapshot");
+    FILE * fp2 = fopen(name, "w");
+    output_field ({u.x, u.y, p, error, tracer}, fp = fp2);
+
 }
