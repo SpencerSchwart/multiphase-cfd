@@ -1,7 +1,7 @@
 #include "../include/navier-stokes.h"
 
 #define P_TOLERANCE 1e-3
-#define N_MAX 500 // maximum iterations of pressure solver
+#define N_MAX 200 // maximum iterations of pressure solver
 
 VectorField u;
 VectorField us; // intermediate velocity field

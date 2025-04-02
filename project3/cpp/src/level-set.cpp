@@ -8,11 +8,9 @@ ScalarField heavy;  // heavyside function of level-set funciton
 
 FaceVectorField tracerf; // tracer flux
 
-const double dtau = 0.0001;
+const double dtau = 0.000025; // 0.00005 for 128x128
 double epsilon = 2*delta; // default interface thickness is 2 cell widths
                           // doesn't work right now
-
-double reinit_tolerace = 1e-5;
 
 extern VectorField u;
 extern FaceVectorField uf;
@@ -75,11 +73,8 @@ static void reinitialize (ScalarField& phi)
     ScalarField phi0;
     FOREACH()
         phi0(i,j) = phi(i,j);
-    
-    double l2error = 1e30;
 
-    int iter = 0, itermax = 15;
-    //while (l2error > reinit_tolerace && iter < itermax)
+    int iter = 0, itermax = 7;
     while (iter < itermax)
     {
         ScalarField phin;
@@ -88,16 +83,17 @@ static void reinitialize (ScalarField& phi)
 
         FOREACH()
         {
-            if (fabs(phi(i,j)) <= epsilon) 
-            {
-            double dpdxb = face_gradient_x(phin, i, j);
-            double dpdxf = face_gradient_x(phin, i+1, j);
-            double dpdyb = face_gradient_y(phin, i, j);
-            double dpdyf = face_gradient_y(phin, i, j+1);
+            //double dpdxb = face_gradient_x(phin, i, j);
+            //double dpdxf = face_gradient_x(phin, i+1, j);
+            //double dpdyb = face_gradient_y(phin, i, j);
+            //double dpdyf = face_gradient_y(phin, i, j+1);
 
-            double dpdx = uf.x(i,j) > 0? dpdxb: dpdxf;
-            double dpdy = uf.y(i,j) > 0? dpdyb: dpdyf;
+            //double dpdx = uf.x(i,j) > 0? dpdxb: dpdxf;
+            //double dpdy = uf.y(i,j) > 0? dpdyb: dpdyf;
+            double dpdx = central_x (phin, i, j, delta);
+            double dpdy = central_y (phin, i, j, delta);
             double gradphi = sqrt(sq(dpdx) + sq(dpdy));
+
 #if 0
             double phixf = max(max(dpdxb, 0), min(dpdxf, 0));
             double phixb = min(min(dpdxb, 0), max(dpdxf, 0));
@@ -116,24 +112,21 @@ static void reinitialize (ScalarField& phi)
                                 max(sq(min(dpdyb, 0)), sq(max(dpdyf, 0))) );
 #endif
             phi(i,j) += dtau*phi_sign(phi0, i, j, epsilon)*(1 - gradphi);
-            }
         }
         update_boundary(phi);
-        l2error = l2_scalar (phin, phi);
         iter++;
     }
-    //std::cout << "iter = " << iter << " error = " << l2error << " delta = " << delta << "\n";
 }
 
 static void reinitialization (int istep, double time, double dt)
 {
-    if (istep % 50 == 0) {
+    if (istep % 200== 0) {
         reinitialize (tracer);
+        update_boundary(tracer);
         FOREACH()
         {
             heavy(i,j) = get_heavyside(tracer, i, j);
         }
-        update_boundary(tracer);
     }
 }
 static Event event2(reinitialization, "tracer reinitialization");
