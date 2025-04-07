@@ -14,7 +14,7 @@ double uerror = 0;
 const double tend = 10;
 const double size = 1;
 const double u0 = 1;
-const int level = 8;
+const int level = 7;
 
 Vector line = {0.5,0.5};
 
@@ -178,7 +178,8 @@ int main()
     epsilon = 2.*(size/(double)pow(2,level));
     std::cout << "epsilon = " << epsilon << "\n";
 
-    dtmax = 0.0005;
+    //dtmax = 0.0005;
+    dtmax = 0.001;
     run_events();
     events.printEvents();
 

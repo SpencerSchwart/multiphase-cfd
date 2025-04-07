@@ -8,7 +8,7 @@ ScalarField heavy;  // heavyside function of level-set funciton
 
 FaceVectorField tracerf; // tracer flux
 
-const double dtau = 0.000025; // 0.00005 for 128x128
+const double dtau = 0.00005; // 0.00005 for 128x128 and 0.000025 for 256x256
 double epsilon = 2*delta; // default interface thickness is 2 cell widths
                           // doesn't work right now
 
@@ -120,7 +120,8 @@ static void reinitialize (ScalarField& phi)
 
 static void reinitialization (int istep, double time, double dt)
 {
-    if (istep % 200== 0) {
+    //if (istep % 200 == 0) {
+    if (istep % 100 == 0) {
         reinitialize (tracer);
         update_boundary(tracer);
         FOREACH()

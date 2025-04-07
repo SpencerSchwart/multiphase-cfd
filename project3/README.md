@@ -1,10 +1,6 @@
 # Instructions #
-## Basilisk  Program ##
-To run the Basilisk solution to project 3, simply do
-```bash
-make lid.tst
-```
-in project1/basilisk/. One can edit the viscosity and wether to use the upwind or central method inside of lid.c.
+
+Only a C++ program (no Basilisk program) for this project is made.
 
 ## C++ Program ##
 To run the C++ program's solution to project 2, do
@@ -17,6 +13,6 @@ then
 ```
 in project2/cpp. You can also specify viscosity and/or which method for the advection term to use by
 ```bash
-UPWIND=1 RE=400 ./build.sh
+UPWIND=1 RE=1000 ./build.sh
 ```
-where UPWIND=0 corresponds to the central method.
+where UPWIND=0 corresponds to the central method. UPWIND=0 and RE=400 by default.
