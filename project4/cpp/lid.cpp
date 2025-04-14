@@ -6,17 +6,21 @@
 #define RE 400.
 #endif
 
-#define R 0.0785398 // 0.025*pi
+#define R 0.025*M_PI
 
 #define U_TOLERANCE 1e-10
 double uerror = 0;
 
-const double tend = 10;
+const double tend = 0.002;
 const double size = 1;
 const double u0 = 1;
-const int level = 7;
+const int level = 8;
 
 Vector line = {0.5,0.5};
+
+VertexField phi;
+VectorField nfg;
+ScalarField alphag;
 
 void init (int istep, double t, double dt)
 {
@@ -46,14 +50,12 @@ void init (int istep, double t, double dt)
             mu.x(i,j) = (u0*size)/RE;
         FOREACH_FACE_Y()
             mu.y(i,j) = (u0*size)/RE;
-
-        FOREACH() 
-        {
-            // initalize level-set function
-            tracer(i,j) = R - sqrt(sq(grid.x(i,j) - 0.75) + sq(grid.y(i,j) - 0.75));
-            heavy(i,j) = get_heavyside(tracer, i, j);
-        }
         update_boundary(mu);
+
+        FOREACH_VERTEX() 
+            phi(i,j) = R - sqrt(sq(grid.xv(i,j) - 0.75) + sq(grid.yv(i,j) - 0.75));
+        levelset_to_vof(phi, f);
+        reconstruction(f, alphag, nfg);
     }
 }
 Event init_event (init, "init event", 0);
@@ -98,13 +100,14 @@ void output_grid(char* name)
 {
     std::ofstream log;
     log.open(name);
-    log << "x | y | u.x | u.y | p | e | T\n";
+    log << "x | y | u.x | u.y | p | e | f\n";
     for (int i = 0; i < grid.col; ++i) {
         for (int j = 0; j < grid.row; ++j) {
             log << grid.x(i,j) << " " << grid.y(i,j) << " " 
                 << u.x(i,j) << " " << u.y(i,j) << " " << p(i,j) 
-                << " " << error(i,j) << " " << tracer(i,j) 
-                << " " << heavy(i,j) << "\n";
+                << " " << error(i,j) << " " << f(i,j) << " " 
+                << phi(i,j) << " " << nfg.x(i,j) << " " << nfg.y(i,j)
+                << " " << alphag(i,j) << "\n";
         }
         log << "\n";
     }
@@ -126,7 +129,7 @@ Event output_event (output, "output");
 
 void logfile (int istep, double t, double dt)
 {
-    double dropv = get_volume (heavy);
+    double dropv = get_volume (f);
     std::cout << istep << " " << t << " " << dt << " " 
               << Event::allEvents.size() << " " << project.i << " " << project.maxe 
               << " " << uerror << " " << dropv << "\n";
@@ -175,9 +178,6 @@ int main()
     events.printEvents();
     init_grid(size, size, level);
 
-    epsilon = 2.*(size/(double)pow(2,level));
-    std::cout << "epsilon = " << epsilon << "\n";
-
     //dtmax = 0.0005;
     dtmax = 0.001;
     run_events();
@@ -190,6 +190,8 @@ int main()
     output_xcut(name);
     sprintf(name, "final-ycut");
     output_ycut(name);
+    sprintf(name, "final-interface");
+    output_interface(f, name);
 
     return 0;
 }

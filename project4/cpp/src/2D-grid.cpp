@@ -8,6 +8,7 @@ double& delta = grid.delta;
 
 std::vector<VectorField*> VectorField::allVectorFields;
 std::vector<ScalarField*> ScalarField::allScalarFields;
+std::vector<VertexField*> VertexField::allVertexFields;
 std::vector<FaceVectorField*> FaceVectorField::allFaceVectorFields;
 
 
@@ -41,6 +42,16 @@ bool ScalarField::empty()
     return true;
 }
 
+bool VertexField::empty()
+{
+    FOREACH()
+    {
+        if (data[i * ny + j])
+            return false;
+    }
+    return true;
+}
+
 
 void init_grid (double width, double height, int level)
 {
@@ -57,8 +68,10 @@ void init_grid (double width, double height, int level)
     // initalize x & y coordinates
     FOREACH_CELL() 
     {
-        grid.x(i,j) =  i*delta + delta/2 - ghost*delta;
-        grid.y(i,j) =  j*delta + delta/2 - ghost*delta;
+        grid.x(i,j)  =  i*delta + delta/2 - ghost*delta;
+        grid.y(i,j)  =  j*delta + delta/2 - ghost*delta;
+        grid.xv(i,j) =  i*delta - ghost*delta;
+        grid.yv(i,j) =  j*delta - ghost*delta;
     }
 
     for (int k = 0; k < (int)VectorField::allVectorFields.size(); ++k)
@@ -75,6 +88,11 @@ void init_grid (double width, double height, int level)
     for (int k = 0; k < (int)FaceVectorField::allFaceVectorFields.size(); ++k)
     {
         FaceVectorField::allFaceVectorFields[k]->resize(grid.row, grid.col, 0.0);
+    }
+
+    for (int k = 0; k < (int)VertexField::allVertexFields.size(); ++k)
+    {
+        VertexField::allVertexFields[k]->resize(grid.row, grid.col, 0.0);
     }
 }
 

@@ -20,7 +20,6 @@ extern double& delta;
 
 #define dv() (sq(delta))
 
-
 #define FOREACH_CELL() \
     for (int i = 0; i < grid.col; ++i) \
         for (int j = 0; j < grid.row; ++j)
@@ -38,11 +37,12 @@ extern double& delta;
         for (int j = ghost; j < grid.row - (ghost == 2); ++j)
 
 #define FOREACH_VERTEX() \
-    for (int i = ghost; i < grid.col - ghost; ++i) \
-        for (int j = ghost; j < grid.row - ghost; ++j)
+    for (int i = ghost; i < grid.col - (ghost == 2); ++i) \
+        for (int j = ghost; j < grid.row - (ghost == 2); ++j)
 
 
-enum Boundaries {
+enum Boundaries 
+{
     LEFT,           // 0
     RIGHT,          // 1
     TOP,            // 2
@@ -99,7 +99,8 @@ struct Grid
     double delta;
     int row, col;
 
-    Array2D x, y;
+    Array2D x, y;     // cell center coordinates
+    Array2D xv, yv;   // vertex coordinates
 
     Grid() = default;
 
@@ -110,6 +111,8 @@ struct Grid
         col = size; row = size;
         x.resize((col * row), 0.0);
         y.resize((col * row), 0.0);
+        xv.resize((col * row), 0.0);
+        yv.resize((col * row), 0.0);
 
         delta = fmax(width, height) / ((double) pow(2, levelf));
     }
@@ -121,6 +124,8 @@ struct Grid
         col = size; row = size;
         x.resize(row, col, 0.0);
         y.resize(row, col, 0.0);
+        xv.resize(row, col, 0.0);
+        yv.resize(row, col, 0.0);
 
         delta = fmax(width, height) / ((double) pow(2, levelf));
     }
@@ -267,6 +272,56 @@ struct ScalarField
     std::array<bool, NUM_BOUNDARIES> dirichlet;
 };
 
+
+struct VertexField
+{
+    int nx = 0, ny = 0;
+    std::vector<double> data;
+
+    VertexField() :
+        nx(DCOL), ny(DROW), data(DCOL * DROW, 0.0)
+    {
+        allVertexFields.push_back(this);
+        for (int k = LEFT; k < NUM_BOUNDARIES; ++k)
+        {
+            dirichlet[k] = false;
+        }
+    }
+
+    VertexField(int rows, int cols, double initVal = 0.0)
+        : nx(grid.col), ny(grid.row), data(grid.col * grid.row, initVal)
+    {
+        allVertexFields.push_back(this);
+        for (int k = LEFT; k < NUM_BOUNDARIES; ++k)
+        {
+            dirichlet[k] = false;
+        }
+    }
+
+    void resize(int rows, int cols, double newVal = 0.0)
+    {
+        nx = rows; ny = cols;
+        data.resize(nx * ny, newVal);
+    }
+
+    double& operator()(int i, int j)
+    {
+        return data[i * ny + j];
+    }
+
+    double operator()(int i, int j) const
+    {
+        return data[i * ny + j];
+    }
+
+    bool empty();
+
+    static std::vector<VertexField*> allVertexFields;
+
+    std::array<std::function<double()>, NUM_BOUNDARIES> boundary;
+
+    std::array<bool, NUM_BOUNDARIES> dirichlet;
+};
 
 
 
