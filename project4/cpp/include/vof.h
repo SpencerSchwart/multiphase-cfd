@@ -17,6 +17,10 @@ void reconstruction (ScalarField& c, ScalarField& alpha, VectorField& nf);
 
 int interface_points (Vector n, double alpha, Coord intPoints[2]);
 
-void output_interface (ScalarField c, char* file);
+void output_interface (ScalarField& c, char* file);
+
+double rectangle_fraction (Vector nf, double alpha, Coord lp, Coord rp);
+
+void vof_advection (int istep, double t, double dt);
 
 #endif // VOF_H

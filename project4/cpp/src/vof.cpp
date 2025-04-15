@@ -241,13 +241,17 @@ void output_interface (ScalarField& c, char* file)
 }
 
 
-double rectangle_fraction (double c, Coord lp, Coord rp, Vector nf, double alpha)
+double rectangle_fraction (Vector nf, double alpha, Coord lp, Coord rp)
 {
+    Vector nf1 = {nf.x*(rp.x - lp.x), nf.y*(rp.y - lp.y)};
+    alpha -= nf.x*(lp.x + rp.x)/2.;
+    alpha -= nf.y*(lp.y + rp.y)/2.;
 
+    return line_area (nf1, alpha);
 }
 
 
-static void sweep_x(ScalarField& c, double dt)
+static void sweep_x(ScalarField& c, ScalarField& cc, double dt)
 {
     ScalarField alpha, flux;
     VectorField nf;
@@ -262,15 +266,72 @@ static void sweep_x(ScalarField& c, double dt)
         int s = sign(uf.x(i,j));
         int k = s == 1? 0: -1;
 
-        if (c(i+s,j) == 1.)
-            cf = 1.;
+        if (c(i+k,j) >= 1. || c(i+k,j) <= 0.)
+            cf = c(i+k,j);
         else
         {
-            Coord lp = {-0.5, -0.5}, rp = {un - 0.5,0.5};
-            Vector n(s*nf.x(i,j), nf.y(i,j));
-            cf = rectangle_fraction(c(i+k,j), lp, rp, n, alpha(i,j));
+            Coord lp = {-0.5, -0.5}, rp = {s*un - 0.5,0.5};
+            Vector n(-s*nf.x(i+k,j), nf.y(i+k,j));
+            cf = rectangle_fraction(n, alpha(i+k,j), lp, rp);
         }
 
         flux(i,j) = cf*uf.x(i,j);
     }
+
+    FOREACH()
+        c(i,j) += dt*(flux(i,j) - flux(i+1,j) + cc(i,j)*(uf.x(i+1,j) - uf.x(i,j)))/(delta);
 }
+
+
+static void sweep_y (ScalarField& c, ScalarField& cc, double dt)
+{
+    ScalarField alpha, flux;
+    VectorField nf;
+
+    reconstruction(c, alpha, nf);
+
+    FOREACH()
+    {
+        double un = uf.y(i,j)*dt/grid.delta, cf;
+        assert (un < cfl && "ERROR: CFL condition is violated\n");
+
+        int s = sign(uf.y(i,j));
+        int k = s == 1? 0: -1;
+
+        if (c(i,j+k) >= 1. || c(i,j+k) <= 0.)
+            cf = c(i,j+k);
+        else
+        {
+            Coord lp = {-0.5, -0.5}, rp = {s*un - 0.5,0.5};
+            Vector n(-s*nf.y(i,j+k), nf.x(i,j+k));
+            cf = rectangle_fraction(n, alpha(i,j+k), lp, rp);
+        }
+
+        flux(i,j) = cf*uf.y(i,j);
+    }
+
+    FOREACH()
+        c(i,j) += dt*(flux(i,j) - flux(i,j+1) + cc(i,j)*(uf.y(i,j+1) - uf.y(i,j)))/(delta);
+}
+
+
+void vof_advection (int istep, double t, double dt)
+{
+    ScalarField cc;
+    FOREACH()
+        cc(i,j) = f(i,j) > 0.5;
+    
+    if (istep % 2 == 0) {
+        sweep_x(f, cc, dt);
+        sweep_y(f, cc, dt);
+    }
+    else {
+        sweep_y(f, cc, dt);
+        sweep_x(f, cc, dt);
+    }
+    update_boundary(f);
+
+    FOREACH()
+        f(i,j) = clamp(f(i,j), 0., 1.);
+}
+Event vof_advection_event (vof_advection, "vof advection", 1);

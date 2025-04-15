@@ -11,10 +11,10 @@
 #define U_TOLERANCE 1e-10
 double uerror = 0;
 
-const double tend = 0.002;
+const double tend = 0.05;
 const double size = 1;
 const double u0 = 1;
-const int level = 8;
+const int level = 7;
 
 Vector line = {0.5,0.5};
 
