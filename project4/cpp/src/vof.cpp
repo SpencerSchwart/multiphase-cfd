@@ -263,8 +263,8 @@ static void sweep_x(ScalarField& c, ScalarField& cc, double dt)
         double un = uf.x(i,j)*dt/grid.delta, cf;
         assert (un < cfl && "ERROR: CFL condition is violated\n");
 
-        int s = sign(uf.x(i,j));
-        int k = s == 1? 0: -1;
+        int s = sign(un);
+        int k = s == 1? -1: 0;
 
         if (c(i+k,j) >= 1. || c(i+k,j) <= 0.)
             cf = c(i+k,j);
@@ -295,8 +295,8 @@ static void sweep_y (ScalarField& c, ScalarField& cc, double dt)
         double un = uf.y(i,j)*dt/grid.delta, cf;
         assert (un < cfl && "ERROR: CFL condition is violated\n");
 
-        int s = sign(uf.y(i,j));
-        int k = s == 1? 0: -1;
+        int s = sign(un);
+        int k = s == 1? -1: 0;
 
         if (c(i,j+k) >= 1. || c(i,j+k) <= 0.)
             cf = c(i,j+k);
@@ -321,6 +321,10 @@ void vof_advection (int istep, double t, double dt)
     FOREACH()
         cc(i,j) = f(i,j) > 0.5;
     
+    //sweep_x(f, cc, dt);
+    //sweep_y(f, cc, dt);
+
+    #if 1
     if (istep % 2 == 0) {
         sweep_x(f, cc, dt);
         sweep_y(f, cc, dt);
@@ -329,6 +333,7 @@ void vof_advection (int istep, double t, double dt)
         sweep_y(f, cc, dt);
         sweep_x(f, cc, dt);
     }
+    #endif
     update_boundary(f);
 
     FOREACH()

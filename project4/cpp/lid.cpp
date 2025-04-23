@@ -11,10 +11,10 @@
 #define U_TOLERANCE 1e-10
 double uerror = 0;
 
-const double tend = 0.05;
+const double tend = 20;
 const double size = 1;
 const double u0 = 1;
-const int level = 7;
+const int level = 8;
 
 Vector line = {0.5,0.5};
 
@@ -178,8 +178,8 @@ int main()
     events.printEvents();
     init_grid(size, size, level);
 
-    //dtmax = 0.0005;
-    dtmax = 0.001;
+    dtmax = 0.0005;
+    //dtmax = 0.001;
     run_events();
     events.printEvents();
 
