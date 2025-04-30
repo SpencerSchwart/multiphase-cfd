@@ -1,22 +1,17 @@
 # Instructions #
-## Basilisk  Program ##
-To run the Basilisk solution to project 2, simply do
-```bash
-make lid.tst
-```
-in project1/basilisk/. One can edit the viscosity and wether to use the upwind or central method inside of lid.c.
-
 ## C++ Program ##
-To run the C++ program's solution to project 2, do
+For project 4, only a C++ program is available. To run the C++ program's solution to project 4, do
 ```bash
 ./build.sh
 ```
 then
 ```bash
-./lid
+./run.sh
 ```
-in project2/cpp. You can also specify viscosity and/or which method for the advection term to use by
+in project4/cpp. You can also specify which method to calculate interfacial normal and/or which method to solve the VOF advection by, for example,
 ```bash
-UPWIND=1 RE=400 ./build.sh
+YOUNGS=1 BASILISK_VOF=1 ./build.sh
 ```
-where UPWIND=0 corresponds to the central method.
+where YOUNGS=1 will use Youngs-Finite-Difference method and BASILISK_VOF=1 corresponds to using the VOF advection approach as done by Basilisk (http://basilisk.fr/src/vof.h). By default, the code will use the Mixed-Youngs-Centered (MYC) method for normal calculation and the basic Eulerian Implicit (EI) method for VOF advection.
+
+One can also specify parameters like Reynolds #, level of refinement, simulation duration, timestep size, and the droplet's radius in run.sh.
