@@ -2,21 +2,15 @@
 #include "include/navier-stokes.h"
 #include "include/vof.h"
 
-#ifndef RE
-#define RE 400.
-#endif
-
-#define R 0.025*M_PI
-
 #define U_TOLERANCE 1e-10
 double uerror = 0;
 
-const double tend = 20;
+double tend = 10;
+double RE = 400;
+double R = 0.025*M_PI;
 const double size = 1;
 const double u0 = 1;
-const int level = 8;
-
-Vector line = {0.5,0.5};
+int level = 8;
 
 VertexField phi;
 VectorField nfg;
@@ -61,41 +55,6 @@ void init (int istep, double t, double dt)
 Event init_event (init, "init event", 0);
 
 
-void output_xcut(char* name)
-{
-    std::ofstream snapshot;
-    snapshot.open(name);
-    snapshot << "x | y | u.x | u.y | uint | vint | p\n";
-    Point cut = locate (line.x, 0);
-    for (int j = ghost; j < grid.row - ghost; ++j)
-    {
-        Point temp = {cut.i, j};
-        double uxint = interpolate_bi (temp, u.x, line.x, grid.y(cut.i,j));
-        double uyint = interpolate_bi (temp, u.y, line.x, grid.y(cut.i,j));
-        snapshot << grid.x(cut.i,j) << " " << grid.y(cut.i,j) << " " 
-                 << u.x(cut.i,j) << " " << u.y(cut.i,j) << " " 
-                 << uxint << " " << uyint << " " << p(cut.i,j) << "\n";
-    }
-}
-
-void output_ycut(char* name)
-{
-    std::ofstream snapshot;
-    snapshot.open(name);
-    snapshot << "x | y | u.x | u.y | uint | vint | p\n";
-    Point cut = locate (0, line.y);
-    for (int i = ghost; i < grid.col - ghost; ++i)
-    {
-        Point temp = {i, cut.j};
-        double uxint = interpolate_bi (temp, u.x, grid.x(i,cut.j), line.y);
-        double uyint = interpolate_bi (temp, u.y, grid.x(i,cut.j), line.y);
-        snapshot << grid.x(i,cut.j) << " " << grid.y(i,cut.j) << " " 
-                 << u.x(i,cut.j) << " " << u.y(i,cut.j) << " " 
-                 << uxint << " " << uyint << " " << p(i,cut.j) << "\n";
-    }
-}
-
-
 void output_grid(char* name)
 {
     std::ofstream log;
@@ -122,6 +81,8 @@ void output (int istep, double t, double dt)
         char name[80];
         sprintf(name, "%d-snapshot-%g", istep, t);
         output_grid(name);
+        sprintf(name, "%d-interface-%g", istep, t);
+        output_interface(f, name);
     }
 }
 Event output_event (output, "output");
@@ -147,49 +108,31 @@ void logfile (int istep, double t, double dt)
 }
 Event log_event (logfile, "log");
 
-
-VectorField un;
-void converge_check (int istep, double t, double dt)
+int main(int argc, char** argv)
 {
-    double maxdiff = -1e30;
-    FOREACH()
-    {
-        double diffx = un.x(i,j) - u.x(i,j);
-        double diffy = un.y(i,j) - u.y(i,j);
-        if (fabs(diffx) > maxdiff)
-            maxdiff = diffx;
-        if (fabs(diffy) > maxdiff)
-            maxdiff = diffy;
-    }
-    uerror = maxdiff;
-    if (fabs(maxdiff) < U_TOLERANCE && istep > 0) 
-        stop = true;
+    dtmax = 0.0005;  // for lvl 8
+    //dtmax = 0.001; // for lvl 7
 
-    FOREACH()
-    {
-        un.x(i,j) = u.x(i,j);
-        un.y(i,j) = u.y(i,j);
-    }
-}
-Event converge (converge_check, "u_converge");
+    if (argc > 1)
+        level = atoi (argv[1]);
+    if (argc > 2)
+        tend = atof (argv[2]);
+    if (argc > 3)
+        RE = atof (argv[3]);
+    if (argc > 4)
+        dtmax = atof (argv[4]);
+    if (argc > 5)
+        R = atof (argv[5]);
 
-int main()
-{
     events.printEvents();
     init_grid(size, size, level);
 
-    dtmax = 0.0005;
-    //dtmax = 0.001;
     run_events();
     events.printEvents();
 
     char name[80];
     sprintf(name, "final-snapshot");
     output_grid(name);
-    sprintf(name, "final-xcut");
-    output_xcut(name);
-    sprintf(name, "final-ycut");
-    output_ycut(name);
     sprintf(name, "final-interface");
     output_interface(f, name);
 

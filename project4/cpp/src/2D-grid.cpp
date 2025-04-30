@@ -96,13 +96,17 @@ void init_grid (double width, double height, int level)
     }
 }
 
-
 bool is_ghost_cell (int i, int j)
 {
     return (i < ghost || j < ghost || i > grid.col - ghost || j > grid.row - ghost);
 
 }
 
+bool is_real (Point pc)
+{
+    return pc.i >= 0 && pc.i < grid.col &&
+           pc.j >= 0 && pc.j < grid.row;
+}
 
 Point locate (double xp, double yp)
 {
@@ -143,7 +147,6 @@ void update_boundary_impl (VectorField& vf)
     {
         for (int j = ghost; j < grid.row; ++j) 
         {
-            
             if (vf.boundary.dirichlet_x[RIGHT])
                 vf.x(i,j) = 2*vf.boundary.x[RIGHT]() - vf.x(i-1,j);
             else

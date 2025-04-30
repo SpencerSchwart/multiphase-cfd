@@ -21,15 +21,30 @@ inline int sign(T x)
 template <typename T>
 inline int sign2(T x)
 {
-    
     return x < 0? -1: (x > 0? 1: 0);
 }
 
+template <typename T>
+inline T min (T a, T b)
+{
+    return a < b? a: b;
+}
+
+template <typename T>
+inline T max (T a, T b)
+{
+    return a > b? a: b;
+}
 
 struct Coord 
 {
     double x;
     double y;
+
+    void fill(double xf, double yf)
+    {
+        x = xf, y = yf;
+    }
 };
 
 
@@ -55,6 +70,11 @@ struct Vector
     {
         abs_mag = fabs(x) + fabs(y) + SEPS;
         x /= abs_mag; y /= abs_mag;
+    }
+
+    void fill(double xf, double yf)
+    {
+        x = xf, y = yf;
     }
 };
 

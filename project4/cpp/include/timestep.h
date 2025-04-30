@@ -6,7 +6,7 @@
 extern const double cfl;
 extern FaceVectorField uf;
 extern FaceVectorField mu;
-extern const double tend;
+extern double tend;
 extern double dtmax;
 
 void set_timestep (FaceVectorField& uf, double& dt, double dx, FaceVectorField& mu);

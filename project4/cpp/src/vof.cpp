@@ -8,20 +8,6 @@ levelset (phi) notation:
     - = outisde
 */
 
-Vector youngs_normal (Point pc, ScalarField& c)
-{
-    int i = pc.i, j = pc.j;
-
-    Vector m;
-    m.x = -(c(i+1,j+1) + 2*c(i+1,j) - c(i-1,j+1) - 
-            2*c(i-1,j) - c(i-1,j-1) + c(i+1,j-1))/(8*delta);
-    m.y = -(c(i+1,j+1) + 2*c(i,j+1) - c(i+1,j-1) -
-            2*c(i,j-1) - c(i-1,j-1) + c(i-1,j+1))/(8*delta);
-    m.abs_normalize();
-
-    return m;
-}
-
 // Taken from Basilisk "geometry.h"
 // http://basilisk.fr/src/geometry.h#line_alpha
 double line_alpha (double c, Vector n)
@@ -161,6 +147,17 @@ void levelset_to_vof (VertexField& phi, ScalarField& c)
 
 }
 
+Vector interface_normal (Point pc, ScalarField& c)
+{
+#if YOUNGS
+    return youngs_normal(pc, c);
+#elif CCM
+    return height_normal(pc, c);
+#else // MYC
+    return mycs_normal(pc, c);
+#endif
+}
+
 
 void reconstruction (ScalarField& c, ScalarField& alpha, VectorField& nf)
 {
@@ -168,7 +165,7 @@ void reconstruction (ScalarField& c, ScalarField& alpha, VectorField& nf)
     {
         if (c(i,j) > 0. && c(i,j) < 1.)
         {
-            Vector n = youngs_normal({i,j}, c);
+            Vector n = interface_normal ({i,j}, c);
             nf.x(i,j) = n.x, nf.y(i,j) = n.y;
 
             alpha(i,j) = line_alpha (c(i,j), n);
@@ -181,39 +178,6 @@ void reconstruction (ScalarField& c, ScalarField& alpha, VectorField& nf)
     }
 }
 
-
-int interface_points (Vector n, double alpha, Coord intPoints[2])
-{
-    int count = 0;
-
-    // check on x faces first
-    for (double xp = -0.5; xp <= 0.5; xp += 1)
-    {
-        double yint = (alpha - n.x*xp)/(n.y + SEPS);
-        if (fabs(yint) <= 0.5)
-        {
-            assert(count < 2);
-            intPoints[count] = {xp, yint};
-            count++;
-        }
-    }
-
-    // then check y faces
-    for (double yp = -0.5; yp <= 0.5; yp += 1)
-    {
-        double xint = (alpha - n.y*yp)/(n.x + SEPS);
-        if (fabs(xint) <= 0.5)
-        {
-            assert(count < 2);
-            intPoints[count] = {xint, yp};
-            count++;
-        }
-    }
-
-    return count;
-}
-
-
 // Taken from Basilisk "fractions.h"
 // http://basilisk.fr/src/fractions.h#interface-output
 void output_interface (ScalarField& c, char* file)
@@ -223,10 +187,10 @@ void output_interface (ScalarField& c, char* file)
 
     FOREACH()
     {
-        if (c(i,j) > 0. && c(i,j) < 1.)
+        if (c(i,j) > 0.+INT_TOL && c(i,j) < 1.-INT_TOL)
         {
             double x = grid.x(i,j), y = grid.y(i,j);
-            Vector n = youngs_normal({i,j}, c);
+            Vector n = interface_normal ({i,j}, c);
             double alpha = line_alpha(c(i,j), n);
 
             Coord intPoints[2];
@@ -250,7 +214,7 @@ double rectangle_fraction (Vector nf, double alpha, Coord lp, Coord rp)
     return line_area (nf1, alpha);
 }
 
-
+#if BASILISK_VOF
 static void sweep_x(ScalarField& c, ScalarField& cc, double dt)
 {
     ScalarField alpha, flux;
@@ -313,18 +277,193 @@ static void sweep_y (ScalarField& c, ScalarField& cc, double dt)
     FOREACH()
         c(i,j) += dt*(flux(i,j) - flux(i,j+1) + cc(i,j)*(uf.y(i,j+1) - uf.y(i,j)))/(delta);
 }
+#endif
 
+static void ei_sweep_x(ScalarField& c, ScalarField& cc, double dt)
+{
+    ScalarField alpha, flux;
+    VectorField nf;
+
+    reconstruction(c, alpha, nf);
+
+    FOREACH()
+    {
+        double un = uf.x(i,j)*dt/grid.delta, cf;
+        assert (un < cfl && "ERROR: CFL condition is violated\n");
+
+        int s = sign(un);
+        int k = s == 1? -1: 0;
+
+        if (c(i+k,j) >= 1. || c(i+k,j) <= 0.)
+            cf = c(i+k,j);
+        else
+        {
+            Coord lp = {-0.5, -0.5}, rp = {s*un - 0.5,0.5};
+            Vector n(-s*nf.x(i+k,j), nf.y(i+k,j));
+            cf = rectangle_fraction(n, alpha(i+k,j), lp, rp);
+        }
+
+        flux(i,j) = dt*cf*uf.x(i,j)/delta;
+    }
+
+    FOREACH()
+        c(i,j) = (c(i,j) + flux(i,j) - flux(i+1,j)) /
+                 (1 - dt*(uf.x(i+1,j) - uf.x(i,j))/delta);
+}
+
+
+static void ei_sweep_y (ScalarField& c, ScalarField& cc, double dt)
+{
+    ScalarField alpha, flux;
+    VectorField nf;
+
+    reconstruction(c, alpha, nf);
+
+    FOREACH()
+    {
+        double un = uf.y(i,j)*dt/grid.delta, cf;
+        assert (un < cfl && "ERROR: CFL condition is violated\n");
+
+        int s = sign(un);
+        int k = s == 1? -1: 0;
+
+        if (c(i,j+k) >= 1. || c(i,j+k) <= 0.)
+            cf = c(i,j+k);
+        else
+        {
+            Coord lp = {-0.5, -0.5}, rp = {s*un - 0.5,0.5};
+            Vector n(-s*nf.y(i,j+k), nf.x(i,j+k));
+            cf = rectangle_fraction(n, alpha(i,j+k), lp, rp);
+        }
+
+        flux(i,j) = dt*cf*uf.y(i,j)/delta;
+    }
+
+    FOREACH()
+        c(i,j) = (c(i,j) + flux(i,j) - flux(i,j+1)) /
+                 (1 - dt*(uf.y(i,j+1) - uf.y(i,j))/delta);
+
+}
+
+
+// rectangle_fraction but with two mapping procedures
+// 1. map interface line (n*x = alpha) to cell defined by lp and rp
+// 2. compute volume fraction of area enclosed by lp1 and rp1
+double map_rectangle_fraction (Vector nf, double alpha, Coord lp, Coord rp, Coord lp1, Coord rp1)
+{
+    Vector nf1 = {nf.x*(rp.x - lp.x), nf.y*(rp.y - lp.y)};
+    alpha -= nf.x*(lp.x + rp.x)/2.;
+    alpha -= nf.y*(lp.y + rp.y)/2.;
+
+    return rectangle_fraction (nf1, alpha, lp1, rp1);
+}
+
+#if LE_VOF
+static void le_sweep_x(ScalarField& c, ScalarField& cc, double dt)
+{
+    ScalarField alpha, flux;
+    VectorField nf;
+
+    reconstruction(c, alpha, nf);
+
+    FOREACH()
+    {
+        double un = uf.x(i,j)*dt/grid.delta, cf;
+        assert (un < cfl && "ERROR: CFL condition is violated\n");
+
+        int s = sign(un);
+        int k = s == 1? -1: 0;
+
+        if (c(i+k,j) >= 1. || c(i+k,j) <= 0.)
+            cf = c(i+k,j);
+        else
+        {
+            if (un == 0)
+                continue;
+            double unl = uf.x(i-s,j)*dt/grid.delta;
+            Coord lp, rp, lp1, rp1;
+            if (s == 1) 
+            {
+                lp.fill (-0.5 + unl, -0.5), rp.fill(0.5 + un, 0.5);
+                lp1.fill(0.5, -0.5), rp1.fill(0.5 + un,0.5);
+            }
+            else
+            {
+                lp.fill (-0.5 + un, -0.5), rp.fill (0.5 + unl, 0.5);
+                lp1.fill(-0.5 + un, -0.5), rp1.fill(-0.5, 0.5);
+            }
+            Vector n(-s*nf.x(i+k,j), nf.y(i+k,j));
+            cf = map_rectangle_fraction(n, alpha(i+k,j), lp, rp, lp1, rp1);
+            //std::cout << c(i+k,j) << " " << cf << std::endl;
+        }
+
+        flux(i,j) = dt*cf*uf.x(i,j)/delta;
+    }
+
+    FOREACH()
+        c(i,j) = c(i,j)*(1 + dt*(uf.x(i+1,j) - uf.x(i,j))/delta) + flux(i,j) - flux(i+1,j);
+}
+
+
+static void le_sweep_y(ScalarField& c, ScalarField& cc, double dt)
+{
+    ScalarField alpha, flux;
+    VectorField nf;
+
+    reconstruction(c, alpha, nf);
+
+    FOREACH()
+    {
+        double un = uf.y(i,j)*dt/grid.delta, cf;
+        assert (un < cfl && "ERROR: CFL condition is violated\n");
+
+        int s = sign(un);
+        int k = s == 1? -1: 0;
+
+        if (c(i,j+k) >= 1. || c(i,j+k) <= 0.)
+            cf = c(i,j+k);
+        else
+        {
+            double unl = uf.y(i,j-s)*dt/grid.delta;
+            Coord lp, rp, lp1, rp1;
+            if (s == 1) 
+            {
+                lp.fill (-0.5 + unl, -0.5), rp.fill(0.5 + un, 0.5);
+                lp1.fill(0.5, -0.5), rp1.fill(0.5 + un,0.5);
+            }
+            else
+            {
+                lp.fill (-0.5 + un, -0.5), rp.fill (0.5 + unl, 0.5);
+                lp1.fill(-0.5 + un, -0.5), rp1.fill(-0.5, 0.5);
+            }
+            Vector n(-s*nf.y(i,j+k), nf.x(i,j+k));
+            cf = map_rectangle_fraction(n, alpha(i,j+k), lp, rp, lp1, rp1);
+        }
+
+        flux(i,j) = dt*cf*uf.y(i,j)/delta;
+    }
+
+    FOREACH()
+        c(i,j) = c(i,j)*(1 + dt*(uf.y(i,j+1) - uf.y(i,j))/delta) + flux(i,j) - flux(i,j+1);
+}
+#endif
 
 void vof_advection (int istep, double t, double dt)
 {
     ScalarField cc;
     FOREACH()
         cc(i,j) = f(i,j) > 0.5;
-    
-    //sweep_x(f, cc, dt);
-    //sweep_y(f, cc, dt);
 
-    #if 1
+    #if LE_VOF
+    if (istep % 2 == 0) {
+        le_sweep_x(f, cc, dt);
+        le_sweep_y(f, cc, dt);
+    }
+    else {
+        //le_sweep_y(f, cc, dt);
+        le_sweep_x(f, cc, dt);
+    }
+    #elif BASILISK_VOF
     if (istep % 2 == 0) {
         sweep_x(f, cc, dt);
         sweep_y(f, cc, dt);
@@ -333,7 +472,17 @@ void vof_advection (int istep, double t, double dt)
         sweep_y(f, cc, dt);
         sweep_x(f, cc, dt);
     }
+    #else // EI_VOF
+    if (istep % 2 == 0) {
+        ei_sweep_x(f, cc, dt);
+        ei_sweep_y(f, cc, dt);
+    }
+    else {
+        ei_sweep_y(f, cc, dt);
+        ei_sweep_x(f, cc, dt);
+    }
     #endif
+
     update_boundary(f);
 
     FOREACH()

@@ -8,7 +8,7 @@
 
 extern FaceVectorField uf;
 extern FaceVectorField mu;
-extern const double tend;
+extern double tend;
 
 extern bool stop;
 

@@ -14,6 +14,9 @@
 #define DCOL (grid.col)  // defualt # of columns
 #define DROW (grid.row)  // defualt # of rows
 
+#define NODATA (1e30)
+#define NZERO  (1e-30)   // to avoid dividing by zero
+
 const int dimension = 2;
 const int ghost = 1;    // layers of ghost cells around a domain boundary
 extern double& delta;
@@ -331,6 +334,9 @@ void init_grid (double width, double height, int level);
 bool is_ghost_cell (int i, int j);
 
 
+bool is_real (Point pc);
+
+
 Point locate (double x, double y);
 
 template <typename T>
@@ -391,7 +397,6 @@ double interpolate_bi (Point point, T field, double xp, double yp)
             (field(i,j+offy)*(1. - xi) + field(i+offx,j+offy)*xi)*yi);
     //return ((field));
 }
-
 
 extern Array2D& x, y; // doesn't work
 

@@ -4,6 +4,9 @@
 #include "2D-grid.h"
 #include "methods.h"
 #include "utils.h"
+#include "normals.h"
+
+#define INT_TOL 1e-6
 
 extern ScalarField f;
 
